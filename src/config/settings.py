@@ -1,0 +1,4 @@
+DEV_ROOT_PATH = "DEV"
+
+OUTPUT_FOLDER_PATH = "src/output"
+
