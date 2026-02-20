@@ -81,9 +81,9 @@ def iterate_documents(root_path : str):
         if html_content is None:
             html_content = ""
 
-        url = normalize_url(url)
+        normalized_url = normalize_url(url)
 
-        yield (doc_id, url, html_content)
+        yield (doc_id, normalized_url, html_content)
 
         doc_id += 1
     
