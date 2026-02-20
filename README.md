@@ -1,5 +1,10 @@
-# COMPSCI-121-Search-Engine
+# Search-Engine
+
+## Authors
 
 ---
 
-Authors: Jasnoor Sekhon 81152829, Kenneth Albarillo 32511318, Nicholas Quach 43314317, Abraham Manu 26411611.
+- Jasnoor Sekhon 81152829
+- Kenneth Albarillo 32511318
+- Nicholas Quach 43314317
+- Abraham Manu 26411611
