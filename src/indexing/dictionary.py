@@ -2,10 +2,12 @@
 Writes entries of the term, number of documents that contain the term, and the offset.
 '''
 
+from ..config.settings import DICTIONARY_PATH
+
 class DictionaryWrite:
 
     def __init__(self):
-        self.file = "./dictionary/entries"
+        self.file = DICTIONARY_PATH
     
     def write_entry(self, term: str, doc_count:int, offset: int):
         '''

@@ -8,9 +8,11 @@ DOC_TABLE_PATH = OUTPUT_DIR / "doc_table.tsv"
 
 PARTIAL_PATH = Path("src/output/partial/")
 
-ACCUMULATOR_THRESHOLD = 200_000
+ACCUMULATOR_THRESHOLD = 500_000
 
-MERGED_POSTINGS_PATH = ""
+MERGED_POSTINGS_PATH = OUTPUT_DIR / "merged" / "postings.tsv"
+
+DICTIONARY_PATH = OUTPUT_DIR / "merged" / "dictionary.tsv"
 
 FIELD_WEIGHTS = {
     "title" : 3.0,

@@ -1,120 +1,113 @@
 import os
 from .dictionary import DictionaryWrite
-from ..config.settings import PARTIAL_PATH, MERGED_POSTINGS_PATH
+from ..config.settings import PARTIAL_PATH, MERGED_POSTINGS_PATH, DICTIONARY_PATH
+import heapq
 
+def parse_line(line: str) -> tuple[str, list[str]]:
+    line = line.strip()
+    if not line:
+        return ("", [])
 
-def get_smallest_term(curlist: list[tuple]) -> tuple:
-    '''
-    Get the smallest lexicographical term from the list
-    
-    :param curlist: Contains a list of tuples
-    :type curlist: list[tuple]
-    :param curlist[tuple]: (term, fileIndex, [{id:freq}])
-    :return: Description
-    :rtype: tuple
-    '''
-    smallestTerm = curlist[0]
-    for curTuple in curlist:
-        if (curTuple[0] < smallestTerm[0]):
-            smallestTerm = curTuple
-    return smallestTerm
+    parts = line.split("\t", 1)
+    term = parts[0]
 
-def listToDict(curList: list[str]) -> dict[int, float]:
-    newDict = {}
-    for docInfo in curList:
-        elements = docInfo.split(":")
-        newDict[int(elements[0])] = float(elements[1])
-    return newDict
+    if len(parts) < 2 or not parts[1].strip():
+        return (term, [])
 
-def mergeLists(baseList: list[str], newList: list[str]) -> list[str]:
-    '''
-    Merge two lists into one
-    
-    :param baseList: Original List (curPostingList) | ["3:1", "5:2", ...]
-    :type baseList: list[str]
-    :param newList: New List (next_tuple[2]) | ["3:1", "5:2", ...]
-    :type newList: list[str]
-    :return: Combination of the two lists without duplicates
-    :rtype: list[str]
-    '''
-    baseDict = listToDict(baseList)
-    newDict = listToDict(newList)
+    postings_list = parts[1].split()
+    return (term, postings_list)
 
-    for key, value in newDict.items():
-        if (key in baseDict):
-            baseDict[key] += value
+def add_postings_to_accumulator(accumulator_dict : dict, postings_list : list[str]):
+    for item in postings_list:
+        doc_id_str, freq_str = item.split(":")
+        doc_id = int(doc_id_str)
+        freq = float(freq_str)
+        if doc_id in accumulator_dict.keys():
+            accumulator_dict[doc_id] += freq
         else:
-            baseDict[key] = value
-
-    sorted_doc_ids = sorted(baseDict.keys())
-
-    returnList = []
-    for doc_id in sorted_doc_ids:
-        returnList.append(f"{doc_id}:{baseDict[doc_id]}")
-    return returnList
-    
-
+            accumulator_dict[doc_id] = freq
 class Merger:
     def __init__(self):
         pass
 
     def merge_partials(self):
-        partial_paths = []
+        # Collect and validate partial files
+        partial_files = sorted(PARTIAL_PATH.glob("partial_*.tsv"))
+
+        if not partial_files:
+            print("ERROR: No partial files found.")
+            return
+        
+        # Ensure output directory exists
+        MERGED_POSTINGS_PATH.parent.mkdir(parents=True, exist_ok = True)
+        DICTIONARY_PATH.parent.mkdir(parents=True, exist_ok = True)
+        open(DICTIONARY_PATH, "w").close()   # Check if directories exists:   # In the case two mergers are being utilized, close dictionary file; avoids duplicate entries
+        
+        # Open all partial files
+        file_handles = []
+        for file_path in partial_files:
+            file_handles.append(open(file_path, 'r'))
+
+        # Initialize heap with first line from each file
         heap = []
-        for path, _, fileNames in os.walk("./partials"):
-            for fileName in fileNames:
-                cur_path = os.path.join(path, fileName)
-                partial_paths.append(cur_path)
-        partial_paths = sorted(partial_paths)
+        for file_id in range(0, len(file_handles)):
+            line = file_handles[file_id].readline()
+            if line:
+                (term, postings_list) = parse_line(line)
+                heapq.heappush(heap, (term, file_id, postings_list))
         
-        opened_paths = []
-        for path in partial_paths:
-            opened_paths.append(open(path, 'r'))
+        # Open merged postings output
+        merged_file = open(MERGED_POSTINGS_PATH, "w")
+        dictionary_writer = DictionaryWrite()
 
-        file_index = 0
-        for open_file in opened_paths:
-            first_line = open_file.readline()
-            if (first_line):
-                parsed = first_line.strip().split()
-                heap.append((parsed[0], file_index, parsed[1:]))
-            file_index += 1
-
+        offset_bytes = 0
         
-        final_file = open("./postings/output.txt", "w")
-        dictionaryInstance = DictionaryWrite()
-        current_offset = 0
-        open("./dictionary/entries", "w").close()   # In the case two mergers are being utilized, close dictionary file; avoids duplicate entries
-        while (heap):
-            term_tuple = get_smallest_term(heap)
-            heap.remove(term_tuple)
-            curTerm, curFileId, curPostingList = term_tuple[0], term_tuple[1], term_tuple[2]
-            file_contribution = [curFileId]
-            index = 0
-            while index < len(heap):
-                if (heap[index][0] == curTerm):
-                    tuple_chosen = heap[index]
-                    curPostingList = mergeLists(curPostingList, tuple_chosen[2])
-                    file_contribution.append(tuple_chosen[1])
-                    heap.pop(index)
-                else:
-                    index += 1
+        # Merge loop
+        while heap:
+            # Pop smallest
+            term, file_id, postings_list = heapq.heappop(heap)
             
-            save_offset = current_offset
-            line = curTerm + " " + " ".join(curPostingList) + "\n"
-            bytes_written = final_file.write(line)
-            current_offset += bytes_written
+            
+            # Start accumulating postings for this term
+            postings_accumulator = dict()
+            add_postings_to_accumulator(postings_accumulator, postings_list)
 
-            docFreq = len(curPostingList)
-            dictionaryInstance.write_entry(curTerm, docFreq, save_offset)
+            file_contribution = [file_id]
+
+            # Pull all other heap entries that have the same term
+            while heap and heap[0][0] == term:
+                _, file_id2, postings_list2 = heapq.heappop(heap)
+                add_postings_to_accumulator(postings_accumulator, postings_list2)
+                file_contribution.append(file_id2)
+            
+            # Finalize postings: sort doc_ids and format postings list
+            sorted_doc_ids = sorted(postings_accumulator.keys())
+            
+            final_postings_list = []
+            for doc_id in sorted_doc_ids:
+                term_freq = postings_accumulator[doc_id]
+                final_postings_list.append(f"{doc_id}:{term_freq}")
+            
+            doc_freq = len(final_postings_list)
+
+            # Write merged line
+            merged_line_str = term + "\t" + " ".join(final_postings_list) + "\n"
+            bytes_written = len(merged_line_str.encode("utf-8"))
+            merged_file.write(merged_line_str)
+
+            # Write dictionary entry
+            dictionary_writer.write_entry(term, doc_freq, offset_bytes)
+            offset_bytes += bytes_written
         
+            # Advance each contributing file by one line and push onto heap
             for file_id in file_contribution:
-                curLine = opened_paths[file_id].readline()
+                curr_line = file_handles[file_id].readline()
 
-                if curLine:
-                    parsed = curLine.strip().split()
-                    heap.append((parsed[0], file_id, parsed[1:]))
+                if curr_line:
+                    next_term, next_postings_list = parse_line(curr_line)
+                    heapq.heappush(heap, (next_term, file_id, next_postings_list))
         
-        final_file.close()
-        for file in opened_paths:
+        # Close all files
+        merged_file.close()
+        for file in file_handles:
             file.close()
-

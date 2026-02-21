@@ -10,6 +10,7 @@ def build_index():
     new_doc_id = 0
     partial_num = 0
     total_postings_written = 0
+    total_tokens = set()
     accumulator = IndexAccumulator()
 
     DOC_TABLE_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -37,6 +38,7 @@ def build_index():
                 weight = FIELD_WEIGHTS[field_name]
 
                 for token in tokens:
+                    total_tokens.add(token)
                     if token in local_counts:
                         local_counts[token] += weight
                     else:
@@ -59,6 +61,7 @@ def build_index():
     print(f"Number of documents processed: {doc_count}")
     print(f"Number of partials created: {partial_num}")
     print(f"Number of postings: {total_postings_written}")
+    print(f"Number of tokens: {len(total_tokens)}")
 
 if __name__ == "__main__":
     build_index()

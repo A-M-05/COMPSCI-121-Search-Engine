@@ -1,3 +1,4 @@
 DEV/
 venv/
-output/
+src/output/
+src/analytics

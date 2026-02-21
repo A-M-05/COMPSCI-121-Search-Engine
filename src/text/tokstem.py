@@ -7,7 +7,7 @@ def tokenize(text_content: str) -> list[str]:
     text_lower = text_content.lower()
 
     for char in text_lower:
-        if char.isalnum():
+        if char.isalnum() and char.isascii():
             current.append(char)
         else:
             if current:
