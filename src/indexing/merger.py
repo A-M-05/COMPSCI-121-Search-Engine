@@ -109,5 +109,6 @@ class Merger:
         
         # Close all files
         merged_file.close()
+        dictionary_writer.close()
         for file in file_handles:
             file.close()
