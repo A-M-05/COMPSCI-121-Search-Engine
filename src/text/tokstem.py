@@ -24,7 +24,6 @@ stemmer = SnowballStemmer("english")
 def stem_tokens(tokens: list[str]) -> list[str]:
     return [stemmer.stem(token) for token in tokens]
 
-
 def normalize(content: str) -> list[str]:
     tokens = tokenize(content)
     return stem_tokens(tokens)
