@@ -1,6 +1,6 @@
 from ..search.searcher import Searcher
 
-def main():
+def search():
     searcher = Searcher()
 
     print("Type 'quit' to quit")
@@ -24,7 +24,3 @@ def main():
             print()
 
     searcher.close()
-
-
-if __name__ == '__main__':
-    main()
