@@ -21,11 +21,11 @@ def add_postings_to_accumulator(accumulator_dict : dict, postings_list : list[st
     for item in postings_list:
         doc_id_str, freq_str = item.split(":")
         doc_id = int(doc_id_str)
-        freq = float(freq_str)
-        if doc_id in accumulator_dict.keys():
-            accumulator_dict[doc_id] += freq
+        positions = [int(p) for p in freq_str.split(',')]
+        if doc_id in accumulator_dict:
+            accumulator_dict[doc_id].extend(positions)
         else:
-            accumulator_dict[doc_id] = freq
+            accumulator_dict[doc_id] = positions
 class Merger:
     def __init__(self):
         pass
@@ -85,8 +85,9 @@ class Merger:
             
             final_postings_list = []
             for doc_id in sorted_doc_ids:
-                term_freq = postings_accumulator[doc_id]
-                final_postings_list.append(f"{doc_id}:{term_freq}")
+                positions = postings_accumulator[doc_id]
+                pos_str = ','.join(str(p) for p in positions)
+                final_postings_list.append(f"{doc_id}:{pos_str}")
             
             doc_freq = len(final_postings_list)
 

@@ -18,6 +18,28 @@ DOC_LENGTHS_PATH = OUTPUT_DIR / "merged" / "doc_lengths.tsv"
 
 COLLECTION_STATS_PATH = OUTPUT_DIR / "merged" / "collection_stats.tsv"
 
+EXACT_DUPLICATES_PATH = OUTPUT_DIR / "extras" / "exact_duplicates.tsv"
+
+NEAR_DUPLICATES_PATH = OUTPUT_DIR / "extras" / "near_duplicates.tsv"
+
+GRAPH_EDGES_PATH = OUTPUT_DIR / "extras" / "graph_edges.tsv"
+
+PAGERANK_PATH = OUTPUT_DIR / "extras" / "pagerank.tsv"
+
+PAGERANK_ALPHA = 0.85
+
+PAGERANK_ITERATIONS = 20
+
+PAGERANK_SCORE_WEIGHT = 0.2
+
+SIMHASH_BITS = 64
+
+SIMHASH_HAMMING_THRESHOLD = 3
+
+SIMHASH_BUCKET_BITS = 12
+
+BIGRAM_INDEX_PATH = OUTPUT_DIR / "merged" / "bigram_index.tsv"
+
 FIELD_WEIGHTS = {
     "title" : 3.0,
     "headings" : 2.0,

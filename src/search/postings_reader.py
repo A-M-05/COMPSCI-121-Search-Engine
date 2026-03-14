@@ -20,8 +20,11 @@ class PostingsReader:
         
         postings = []
         for item in parts[1].split():
-            doc_id_str, freq_str = item.split(':')
-            postings.append((int(doc_id_str), float(freq_str)))
+            doc_id_str, pos_str = item.split(':')
+            doc_id = int (doc_id_str)
+            positions = [int (p) for p in pos_str.split(',')]
+            # EXTRA CREDIT T3: changed the postings to be doc_id, [positions]
+            postings.append((doc_id, positions))
         return postings
     
         # parts[1] = postings side of the line

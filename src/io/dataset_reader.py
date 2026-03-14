@@ -31,11 +31,14 @@ def normalize_url(url: str) -> str:
     if not url:
         return ""
 
-    # Remove fragment
-    clean_url, _ = urldefrag(url)
-
-    # Split into components
-    split = urlsplit(clean_url)
+    # Remove fragment and split into components
+    try:
+        clean_url, _ = urldefrag(url)
+        split = urlsplit(clean_url)
+    except ValueError:
+        return ""
+    except Exception:
+        return ""
 
     scheme = (split.scheme or "").lower()
     netloc = (split.netloc or "").lower()

@@ -1,5 +1,7 @@
 from pathlib import Path
 from ..config.settings import ACCUMULATOR_THRESHOLD
+from collections import defaultdict
+# Used for extra credit ^^^
 # Make threshold higher - 50 is temporary
 class IndexAccumulator:
     def __init__(self):
@@ -17,7 +19,8 @@ class IndexAccumulator:
         '''
         self.threshold = threshold
 
-    def add_document(self, doc_id : int, local_counts : dict[str, float]) -> None:
+    # EXTRA CREDIT: changing the local_count types from dict[str, float] to dict[str, list[int]]
+    def add_document(self, doc_id : int, local_positions : dict[str, list[int]]) -> None:
         '''
         Adds a new document to the index, increasing the term frequency
         for words from different documents.
@@ -25,16 +28,16 @@ class IndexAccumulator:
 
         :param doc_id: Unique integer refencing a document
         :type doc_id: int
-        :param local_counts: The counts of a word (i.e. {"twice" : 2, ...})
-        :type local_counts: dict
+        :param local_positions: The counts of a word (i.e. {"twice" : 2, ...})
+        :type local_positions: dict[str : list[int]]
         '''
-        for term, freq in local_counts.items():
+        for term, positions in local_positions.items():
             if term not in self.index_map:
                 self.index_map[term] = {}
             if doc_id not in self.index_map[term]:
-                self.index_map[term][doc_id] = 0.0
+                self.index_map[term][doc_id] = []
                 self.postings_count += 1
-            self.index_map[term][doc_id] += freq
+            self.index_map[term][doc_id].extend(positions)
     
     def unique_terms(self) -> int:
         '''
@@ -44,6 +47,23 @@ class IndexAccumulator:
         :rtype: int
         '''
         return len(self.index_map)
+    
+    # build positions used for extra credit
+    def build_positions(self, tokens):
+        '''
+        With a dictionary, maps the tokens with a term and list of
+        positions where the term appears in the document.
+
+        :param tokens: Ordered list of tokens from a document
+        :type tokens: list[str]
+
+        :return: Tokens from a given document containing the position
+        :rtype: dict[str : list[int]]
+        '''
+        positions = defaultdict(list)
+        for i, token in enumerate(tokens):
+            positions[token].append(i)
+        return dict(positions)
     
     def should_flush(self) -> bool:
         '''
@@ -70,8 +90,13 @@ class IndexAccumulator:
 
                 parts = []
                 for d in doc_ids:
-                    tf = postings_dict[d]
-                    parts.append(f"{d}:{tf}")
+                    # EXTRA CREDIT
+                    # instead of term : {docID:tf}, {docID:tf}
+                    # Its now term: {docID:[pos,pos,pos]}
+                    # Need to change postings_reader.py to convert string into list
+                    positions = postings_dict[d]
+                    pos_string = ",".join(str(p) for p in positions)
+                    parts.append(f"{d}:{pos_string}")
                 
                 postings_string = " ".join(parts)
 
