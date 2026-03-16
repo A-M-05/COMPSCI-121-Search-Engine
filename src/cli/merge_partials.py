@@ -3,6 +3,25 @@ from ..config.settings import MERGED_POSTINGS_PATH, DICTIONARY_PATH, DOC_TABLE_P
 
 
 def merge() -> None:
+    """
+    Execute the final merge step of the indexing pipeline.
+
+    This function calls the Merger to combine all partial index files into
+    a single merged postings file and dictionary. After the merge completes,
+    it computes and prints the on-disk sizes of the merged postings file,
+    dictionary file, and document table to summarize total index storage.
+
+    Files involved:
+    - MERGED_POSTINGS_PATH: final postings file produced by merging
+    - DICTIONARY_PATH: final dictionary mapping terms to metadata
+    - DOC_TABLE_PATH: document ID to URL mapping table
+
+    Output:
+    - Prints index size statistics (bytes, KB, MB)
+
+    :return: None
+    """
+    
     # Run the merge
     Merger().merge_partials()
 

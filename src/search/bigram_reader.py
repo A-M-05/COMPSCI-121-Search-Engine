@@ -1,40 +1,74 @@
 from ..config.settings import BIGRAM_INDEX_PATH
 
+
 class BigramReader:
+    """
+    Load and query the bigram index used for candidate filtering.
+
+    The bigram index maps:
+        bigram -> set(doc_id)
+
+    It is typically used during search preprocessing to reduce the
+    candidate document set before full scoring.
+    """
+
     def __init__(self):
-        # dict where key = bigram, value = set of doc_ids that contain it
+        """
+        Initialize the reader and load the bigram index into memory.
+
+        :return: None
+        """
+
+        # Internal mapping: bigram -> set of docIDs containing it.
         self._index = {}
         self._load()
 
     def _load(self):
-        # If file doesn't exist, stop immediately
+        """
+        Load the bigram index from disk into memory.
+
+        Expected file format (one entry per line):
+            doc_id<TAB>bigram
+
+        Invalid lines are skipped silently to keep loading robust.
+
+        :raises FileNotFoundError: If the bigram index file is missing.
+        :return: None
+        """
+
+        # Stop immediately if the index does not exist.
         if not BIGRAM_INDEX_PATH.exists():
             raise FileNotFoundError(f"[DEBUG] Bigram index not found at {BIGRAM_INDEX_PATH}")
-        
-        # Open file and read it line by line
-        with open(BIGRAM_INDEX_PATH, 'r', encoding = 'utf-8') as f:
+
+        # Read line-by-line to avoid unnecessary memory overhead.
+        with open(BIGRAM_INDEX_PATH, "r", encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if not line:
                     continue
 
-                # Each line looks like '5\tmachin_learn'
-                # Split on the tab to get [doc_id, bigram]
-                parts = line.split('\t', 1)
+                parts = line.split("\t", 1)
                 if len(parts) != 2:
                     continue
 
                 doc_id = int(parts[0])
                 bigram = parts[1]
 
-                # If we haven't seen this bigram before, create empty set for it
+                # Insert into the in-memory inverted mapping.
                 if bigram not in self._index:
                     self._index[bigram] = set()
-                
-                # Add this doc_id to the set of docs containing this bigram
+
                 self._index[bigram].add(doc_id)
-    
-    def get_docs(self, bigram: str) -> set:
-        # Return the set of doc_ids that contain this bigram
-        # If bigram not found, return empty set
+
+    def get_docs(self, bigram: str) -> set[int]:
+        """
+        Retrieve all documents containing a given bigram.
+
+        :param bigram: Bigram string to look up.
+        :type bigram: str
+        :return: Set of docIDs containing the bigram.
+        :rtype: set[int]
+        """
+        
+        # Return empty set instead of None to simplify caller logic.
         return self._index.get(bigram, set())
